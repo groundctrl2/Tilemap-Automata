@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Generational Color Life. Conway's Game of Life, but dead cells change color a few times before fully dying out (No dead cells affect the game).
-public class GenSpectrumLife : ILife
+public class ColorLife : ILife
 {
     private DrawGrid drawGrid;
 
-    public GenSpectrumLife(DrawGrid grid)
+    public ColorLife(DrawGrid grid)
     {
         drawGrid = grid;
     }

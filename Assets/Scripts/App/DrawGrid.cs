@@ -33,7 +33,7 @@ public class DrawGrid : MonoBehaviour
         }
 
         //model = new NormalLife(this);
-        model = new GenSpectrumLife(this);
+        model = new ColorLife(this);
         cells = new HashSet<Cell>();
         SetPattern(Pattern);
     }
