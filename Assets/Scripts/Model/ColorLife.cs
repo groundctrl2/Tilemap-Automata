@@ -15,7 +15,7 @@ public class ColorLife : ILife
     public HashSet<Cell> Step(HashSet<Cell> currentCells)
     {
         HashSet<Cell> newCells = new HashSet<Cell>();
-        HashSet<Cell> cellsToCheck = GetCellsToCheck(currentCells);
+        HashSet<Cell> cellsToCheck = GetNeighbors(currentCells);
 
         foreach (Cell cell in cellsToCheck)
         {
@@ -54,7 +54,7 @@ public class ColorLife : ILife
     }
 
     // Builds and returns a hashset containing the current cells as well as their neighboring cells to be checked by game logic
-    private HashSet<Cell> GetCellsToCheck(HashSet<Cell> currentCells)
+    private HashSet<Cell> GetNeighbors(HashSet<Cell> currentCells)
     {
         HashSet<Cell> cellsToCheck = new HashSet<Cell>();
 
