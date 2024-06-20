@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -33,7 +34,7 @@ public class DrawGrid : MonoBehaviour
         }
 
         //model = new NormalLife(this);
-        model = new ColorLife(this);
+        model = new RockPaperScissorsLife(this);
         cells = new HashSet<Cell>();
         SetPattern(Pattern);
     }
@@ -126,6 +127,28 @@ public class DrawGrid : MonoBehaviour
         }
 
         return count;
+    }
+
+    // Returns neighbors of given position
+    public CellState[] GetNeighborStates(Vector3Int position)
+    {
+        CellState[] neighbors = new CellState[8];
+
+        int neighborIndex = 0;
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                Vector3Int neighborPosition = position + new Vector3Int(x, y, 0); // Add offset to original position
+                if (x != 0 || y != 0)
+                {
+                    neighbors[neighborIndex] = GetState(neighborPosition);
+                    neighborIndex++;
+                }
+            }
+        }
+
+        return neighbors;
     }
 
     // Get the state of the cell at the given position from the cells hashset

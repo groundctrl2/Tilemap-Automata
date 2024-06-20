@@ -1,10 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
+// Population growth rock paper scissor implementation
 public class RockPaperScissorsLife : ILife
 {
     private DrawGrid drawGrid;
+    private CellState[] usedStates = { CellState.stage1, CellState.stage3, CellState.stage4 };
 
     public RockPaperScissorsLife(DrawGrid grid)
     {
@@ -18,15 +22,33 @@ public class RockPaperScissorsLife : ILife
 
         foreach (Cell cell in cellsToCheck)
         {
-            if (cell.state == CellState.stage1 || cell.state == CellState.stage2 || cell.state == CellState.stage3)
+            if (usedStates.Contains(cell.state))
             {
-                // TODO Game Logic
+                // Get predator CellState
+                CellState predator;
+                if (cell.state == usedStates[0])
+                    predator = usedStates[1];
+                else if (cell.state == usedStates[1])
+                    predator = usedStates[2];
+                else // if (cell.state == usedStates[2])
+                    predator = usedStates[0];
+
+                // Record updates based on number of predator neighbors
+                int predatorNeighbors = drawGrid.CountNeighborsOfGivenState(cell.position, predator);
+                if (predatorNeighbors > 2)
+                    newCells.Add(new Cell(cell.position, predator)); // Predator wins
+                else
+                    newCells.Add(new Cell(cell.position, cell.state)); // Current wins
             }
-            // else cell is pattern/user added of a CellState not recognized by model
+            // else if cell is empty, small chance of random state birth
+            else if (cell.state == CellState.dead)
+            {
+                if (Random.value > .9f)
+                    newCells.Add(new Cell(cell.position, usedStates[Random.Range(0, 3)]));
+            }
+            // else cell is CellState not recognized by model (pattern/user added), change to random used state
             else
-            {
-                // TODO 
-            }
+                newCells.Add(new Cell(cell.position, usedStates[Random.Range(0, 3)]));
         }
 
         return newCells;
