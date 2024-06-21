@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,10 @@ public class RockPaperScissorsLife : ILife
     private DrawGrid drawGrid;
     private CellState[] usedStates = { CellState.stage1, CellState.stage3, CellState.stage4 };
 
+    private float birthRate = .95f;
+    private float populationCap = float.MaxValue;
+    private float populationGoal = float.MaxValue;
+
     public RockPaperScissorsLife(DrawGrid grid)
     {
         drawGrid = grid;
@@ -19,6 +24,9 @@ public class RockPaperScissorsLife : ILife
     {
         HashSet<Cell> newCells = new HashSet<Cell>();
         HashSet<Cell> cellsToCheck = GetNeighbors(currentCells);
+
+        int cellCount = currentCells.Count;
+        adjustBirthAndDeathRates(cellCount);
 
         foreach (Cell cell in cellsToCheck)
         {
@@ -35,20 +43,30 @@ public class RockPaperScissorsLife : ILife
 
                 // Record updates based on number of predator neighbors
                 int predatorNeighbors = drawGrid.CountNeighborsOfGivenState(cell.position, predator);
+                int sameStateNeighbors = drawGrid.CountNeighborsOfGivenState(cell.position, cell.state);
+                int emptyNeighbors = drawGrid.CountNeighborsOfGivenState(cell.position, CellState.dead);
+
                 if (predatorNeighbors > 2)
                     newCells.Add(new Cell(cell.position, predator)); // Predator wins
+                else if (predatorNeighbors == sameStateNeighbors)
+                    cellCount--; // Tie death
                 else
-                    newCells.Add(new Cell(cell.position, cell.state)); // Current wins
+                {
+                    if (cellCount >= populationGoal && UnityEngine.Random.value > .9f && emptyNeighbors >= 6 && emptyNeighbors <= 8)
+                        cellCount--; // Overpopulation death
+                    else
+                        newCells.Add(new Cell(cell.position, cell.state)); // Current wins    
+                }
             }
-            // else if cell is empty, small chance of random state birth
+            // else if cell is empty, small chance of random state birth or birth if all neighbors alive
             else if (cell.state == CellState.dead)
             {
-                if (Random.value > .9f)
-                    newCells.Add(new Cell(cell.position, usedStates[Random.Range(0, 3)]));
+                if (UnityEngine.Random.value > birthRate || drawGrid.CountNeighborsOfGivenState(cell.position, CellState.dead) == 0)
+                    newCells.Add(new Cell(cell.position, usedStates[UnityEngine.Random.Range(0, 3)])); // Random chance of birth
             }
             // else cell is CellState not recognized by model (pattern/user added), change to random used state
             else
-                newCells.Add(new Cell(cell.position, usedStates[Random.Range(0, 3)]));
+                newCells.Add(new Cell(cell.position, usedStates[UnityEngine.Random.Range(0, 3)]));
         }
 
         return newCells;
@@ -80,5 +98,33 @@ public class RockPaperScissorsLife : ILife
         }
 
         return cellsToCheck;
+    }
+
+    private void adjustBirthAndDeathRates(float cellCount)
+    {
+        bool isSlowing;
+
+        // Only chance of being true if population is over cap
+        if (cellCount < populationCap && populationCap != float.MaxValue)
+            isSlowing = false;
+        else
+            isSlowing = drawGrid.IsSlowing();
+
+
+        if (isSlowing)
+        {
+            if (birthRate < .99)
+                birthRate *= 1.005f;
+            if (drawGrid.time > 10 && populationCap == float.MaxValue)
+                populationCap = (int)(cellCount * .75);
+        }
+        else
+        {
+            if (birthRate > .94)
+                birthRate *= .995f;
+        }
+
+        populationGoal = (cellCount + populationCap) / 2;
+        Debug.Log($"slowing: {isSlowing}, cellCount: {cellCount}, popCap: {populationCap}, popGoal: {populationGoal} birthRate: {birthRate}");
     }
 }

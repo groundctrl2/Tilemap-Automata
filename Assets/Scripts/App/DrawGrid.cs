@@ -8,11 +8,12 @@ public class DrawGrid : MonoBehaviour
 {
     [SerializeField] public Tilemap tilemap;
     [SerializeField] private Tile[] tiles = new Tile[8];
-    [SerializeField] private float updateInterval = 0.02f; // In seconds
+    [SerializeField] private float updateInterval = 0.05f; // In seconds
     [SerializeField] private Pattern Pattern;
 
     public int iterations { get; private set; }
     public float time { get; private set; }
+    private float startTime;
 
     private ILife model;
     private HashSet<Cell> cells;
@@ -33,7 +34,7 @@ public class DrawGrid : MonoBehaviour
             Debug.LogError("Pattern is not assigned!");
         }
 
-        //model = new NormalLife(this);
+        startTime = Time.time; // Initialize start time
         model = new RockPaperScissorsLife(this);
         cells = new HashSet<Cell>();
         SetPattern(Pattern);
@@ -65,7 +66,7 @@ public class DrawGrid : MonoBehaviour
             UpdateState();
 
             iterations++;
-            time += updateInterval;
+            time = Time.time - startTime; // Calculate elapsed time
 
             // Redo if value changes
             if (currentUpdateInterval != updateInterval)
@@ -196,5 +197,18 @@ public class DrawGrid : MonoBehaviour
     {
         cells.Add(new Cell(position, state));
         tilemap.SetTile(position, tiles[(int)state]);
+    }
+
+    // Return whether generations per second is slowing more than 95% target generations per second (based off update interval)
+    public bool IsSlowing()
+    {
+        if (iterations == 0 || time == 0)
+            return false;
+        else
+        {
+            float actualGenerationsPerSecond = iterations / time;
+            float targetGenerationsPerSecond = 1 / updateInterval;
+            return actualGenerationsPerSecond < targetGenerationsPerSecond * .75f;
+        }
     }
 }
