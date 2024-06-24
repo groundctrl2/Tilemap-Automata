@@ -17,6 +17,7 @@ public class DrawGrid : MonoBehaviour
 
     private ILife model;
     private HashSet<Cell> cells;
+    public int populationGoal { get; private set; }
 
     // 1st step, no external reference needed (Start opposite)
     private void Awake()
@@ -38,6 +39,7 @@ public class DrawGrid : MonoBehaviour
         model = new RockPaperScissorsLife(this);
         cells = new HashSet<Cell>();
         SetPattern(Pattern);
+        populationGoal = 15000;
     }
 
     // Runs Simulate() on enable
@@ -200,7 +202,7 @@ public class DrawGrid : MonoBehaviour
     }
 
     // Return whether generations per second is slowing more than 95% target generations per second (based off update interval)
-    public bool IsSlowing()
+    private bool IsSlowing()
     {
         if (iterations == 0 || time == 0)
             return false;
