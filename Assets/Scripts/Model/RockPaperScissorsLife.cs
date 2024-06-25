@@ -5,12 +5,12 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-// Population growth rock paper scissor implementation
+// Mosaic-growth rock paper scissors implementation
 public class RockPaperScissorsLife : ILife
 {
     private DrawGrid drawGrid;
     private CellState[] usedStates = { CellState.stage1, CellState.stage3, CellState.stage4 };
-    private int populationCap = 5000;
+    private int populationCap = 5000; // For first growth stage
 
     public RockPaperScissorsLife(DrawGrid grid)
     {
@@ -21,14 +21,11 @@ public class RockPaperScissorsLife : ILife
     {
         HashSet<Cell> newCells = new HashSet<Cell>();
         HashSet<Cell> cellsToCheck = GetNeighbors(currentCells);
-
         int cellCount = currentCells.Count;
-
-        Debug.Log($"cellCount: {cellCount}");
 
         foreach (Cell cell in cellsToCheck)
         {
-            // If not dead or non R/P/S
+            // If a R/P/S cell, normal game logic
             if (usedStates.Contains(cell.state))
             {
                 // Get predator CellState
@@ -60,18 +57,18 @@ public class RockPaperScissorsLife : ILife
                 int paperNeighbors = drawGrid.CountNeighborsOfGivenState(cell.position, usedStates[1]);
                 int scissorsNeighbors = 8 - emptyNeighbors - rockNeighbors - paperNeighbors;
 
+                // Growth 1st stage (while under population cap for 1st stage), adding predator neighbors to less densely populated areas
                 if (cellCount < populationCap && emptyNeighbors > 6)
                 {
-                    // if only rock neighbors, spawn paper
+                    // if only same/empty neighbors with 1 prey neighbor, spawn predator
                     if (emptyNeighbors + rockNeighbors == 7 && scissorsNeighbors == 1)
                         newCells.Add(new Cell(cell.position, usedStates[1]));
-                    // if only paper neighbors, spawn scissors
-                    if (emptyNeighbors + paperNeighbors == 7 && rockNeighbors == 1)
+                    else if (emptyNeighbors + paperNeighbors == 7 && rockNeighbors == 1)
                         newCells.Add(new Cell(cell.position, usedStates[2]));
-                    // if only scissors neighbors, spawn rock
-                    if (emptyNeighbors + scissorsNeighbors == 7 && paperNeighbors == 1)
+                    else if (emptyNeighbors + scissorsNeighbors == 7 && paperNeighbors == 1)
                         newCells.Add(new Cell(cell.position, usedStates[0]));
                 }
+                // Growth 2nd stage, filling in holes with most appropriate predator
                 else if (cellCount > populationCap && emptyNeighbors <= 3)
                 {
                     if (rockNeighbors > paperNeighbors && rockNeighbors > scissorsNeighbors)

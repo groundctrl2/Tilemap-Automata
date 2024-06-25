@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa4d307a2ffc4264491894938ea09ba6, type: 3}
   m_Name: Square1x1
   m_EditorClassIdentifier: 
-  cells: []
+  cells:
+  - {x: 0, y: 0}
