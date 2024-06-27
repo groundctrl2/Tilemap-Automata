@@ -16,7 +16,7 @@ public class HuntingLife : ILife
 
     public HuntingLife(DrawGrid grid)
     {
-        drawGrid = grid;
+        drawGrid = grid ?? throw new ArgumentNullException(nameof(grid));
     }
 
     public HashSet<Cell> Step(HashSet<Cell> currentCells)
@@ -38,7 +38,7 @@ public class HuntingLife : ILife
                 // Predator logic
                 if (cell.state == predator)
                 {
-                    if (preyPositions != null || preyPositions.Count != 0)
+                    if (preyPositions != null && preyPositions.Count != 0)
                     {
                         // Eat
                         Vector3Int preyNearby = GetStateNearby(cell.position, prey);
@@ -95,7 +95,7 @@ public class HuntingLife : ILife
                 else if (cell.state == prey)
                 {
                     List<Vector3Int> availablePositions = GetAvailablePositions(cell.position, false);
-                    Vector3Int randomPosition = availablePositions[UnityEngine.Random.Range(0, availablePositions.Count - 1)];
+                    Vector3Int randomPosition = availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
                     newCells.Add(new Cell(randomPosition, prey));
 
                     // If another prey nearby and mostly alone, chance of baby prey is left in previous position (only if prey moves)

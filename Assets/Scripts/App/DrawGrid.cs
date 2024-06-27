@@ -24,20 +24,20 @@ public class DrawGrid : MonoBehaviour
     {
         if (tilemap == null)
         {
-            Debug.LogError("Tilemap is not assigned!");
+            Debug.LogError("Tilemap is not assigned");
         }
         if (tiles == null || tiles.Length == 0)
         {
-            Debug.LogError("Tiles are not assigned or empty!");
+            Debug.LogError("Tiles are not assigned or empty");
         }
         if (Pattern == null)
         {
-            Debug.LogError("Pattern is not assigned!");
+            Debug.LogError("Pattern is not assigned");
         }
 
+        cells = new HashSet<Cell>();
         startTime = Time.time; // Initialize start time
         model = new HuntingLife(this);
-        cells = new HashSet<Cell>();
         SetPattern(Pattern);
         populationGoal = 15000;
     }
@@ -93,8 +93,25 @@ public class DrawGrid : MonoBehaviour
         tilemap.ClearAllTiles(); // Clear previous tiles
         cells = model.Step(cells);
 
+        if (cells == null)
+        {
+            Debug.LogError("Model step returned null cells");
+            return;
+        }
+
         foreach (Cell cell in cells)
         {
+            if (cell.position == null)
+            {
+                Debug.LogError("Cell position is null");
+                continue;
+            }
+            if (tiles[(int)cell.state] == null)
+            {
+                Debug.Log($"Null cell state: {cell.state}");
+                continue;
+            }
+
             tilemap.SetTile(cell.position, tiles[(int)cell.state]);
         }
     }
@@ -180,16 +197,18 @@ public class DrawGrid : MonoBehaviour
     }
 
     // Places the given cell pattern in the middle of the grid
-    private void SetPattern(Pattern Pattern)
+    private void SetPattern(Pattern pattern)
     {
+        if (pattern == null)
+            Debug.Log("Pattern is null.");
+
         Clear();
+        Vector2Int center = pattern.GetCenter();
 
-        Vector2Int center = Pattern.GetCenter();
-
-        for (int i = 0; i < Pattern.cells.Length; i++)
+        for (int i = 0; i < pattern.cells.Length; i++)
         {
             // Cast because SetTile requires Vector3, offset by center point to ensure pattern centered at origin
-            Vector3Int position = (Vector3Int)(Pattern.cells[i] - center);
+            Vector3Int position = (Vector3Int)(pattern.cells[i] - center);
             addCurrentCell(position, CellState.alive);
         }
     }

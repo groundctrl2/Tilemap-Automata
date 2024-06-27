@@ -44,11 +44,14 @@ public class CameraController : MonoBehaviour
         // Get bounds for all cells
         foreach (Cell cell in cells)
         {
-            Vector3Int position = cell.position;
-            min.x = Mathf.Min(position.x, min.x);
-            min.y = Mathf.Min(position.y, min.y);
-            max.x = Mathf.Max(position.x, max.x);
-            max.y = Mathf.Max(position.y, max.y);
+            if (cell.state != CellState.dead)
+            {
+                Vector3Int position = cell.position;
+                min.x = Mathf.Min(position.x, min.x);
+                min.y = Mathf.Min(position.y, min.y);
+                max.x = Mathf.Max(position.x, max.x);
+                max.y = Mathf.Max(position.y, max.y);
+            }
         }
 
         float width = max.x - min.x;
