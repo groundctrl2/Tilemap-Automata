@@ -36,7 +36,7 @@ public class DrawGrid : MonoBehaviour
         }
 
         startTime = Time.time; // Initialize start time
-        model = new RockPaperScissorsLife(this);
+        model = new HuntingLife(this);
         cells = new HashSet<Cell>();
         SetPattern(Pattern);
         populationGoal = 15000;
