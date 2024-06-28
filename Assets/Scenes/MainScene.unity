@@ -420,6 +420,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3d1eea21359521e46b69fd2962059d67, type: 2}
   updateInterval: 0.05
   Pattern: {fileID: 11400000, guid: b811509036524de4ab97e749501c5d67, type: 2}
+  populationGoal: 1000
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

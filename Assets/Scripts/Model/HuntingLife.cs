@@ -11,7 +11,9 @@ public class HuntingLife : ILife
     private CellState predator = CellState.stage1;
     private CellState prey = CellState.alive;
     private List<Vector3Int> preyPositions = new List<Vector3Int>();
-    private int killCount = 0;
+    private List<Vector3Int> takenPredatorPositions;
+    private List<Vector3Int> takenPreyPositions;
+    private int preyCount = int.MinValue;
     private int predatorCount = 0;
 
     public HuntingLife(DrawGrid grid)
@@ -22,6 +24,9 @@ public class HuntingLife : ILife
     public HashSet<Cell> Step(HashSet<Cell> currentCells)
     {
         HashSet<Cell> newCells = new HashSet<Cell>();
+        takenPredatorPositions = new List<Vector3Int>();
+        takenPreyPositions = new List<Vector3Int>();
+        int newBabyPreyCount = 0;
 
         foreach (Cell cell in currentCells)
         {
@@ -38,69 +43,91 @@ public class HuntingLife : ILife
                 // Predator logic
                 if (cell.state == predator)
                 {
-                    if (preyPositions != null && preyPositions.Count != 0)
+                    // Hunger death if predator:prey ratio unbalanced
+                    if (predatorCount > preyCount / 4 && preyCount > 0 && predatorCount > 1)
+                        predatorCount--; // predator dies
+                    // Else if predator has prey to hunt
+                    else if (preyPositions != null && preyPositions.Count != 0)
                     {
-                        // Eat
                         Vector3Int preyNearby = GetStateNearby(cell.position, prey);
-                        if (preyNearby.z != int.MaxValue)
+
+                        // Eat (Ensure prey is there and position not already taken by predator)
+                        if (preyNearby.z != int.MaxValue && !takenPredatorPositions.Contains(preyNearby))
                         {
                             newCells.Add(new Cell(preyNearby, predator));
-                            killCount++;
+                            takenPredatorPositions.Add(preyNearby);
 
                             // Baby predator left in previous place if certain amount of total kills
-                            if (killCount / 25 > predatorCount)
+                            if (UnityEngine.Random.value > .95)
                             {
                                 newCells.Add(new Cell(cell.position, predator));
                                 predatorCount++;
+                                takenPredatorPositions.Add(cell.position);
                             }
                         }
                         // Hunt
                         else
                         {
-                            // Find best target
-                            Vector3Int target = cell.position; // Will stay in place if no target found
-                            double bestDistance = int.MaxValue;
-                            foreach (Vector3Int position in preyPositions)
-                            {
-                                double distance = Math.Sqrt(Math.Pow(cell.position.x - position.x, 2) + Math.Pow(cell.position.y - position.y, 2));
-                                if (bestDistance > distance)
-                                {
-                                    bestDistance = distance;
-                                    target = position;
-                                }
-                            }
-
-                            // Find best next position
+                            // Get best next position
                             List<Vector3Int> availablePositions = GetAvailablePositions(cell.position, true);
-                            Vector3Int bestPosition = cell.position; // Will stay in place if no best position found
-                            bestDistance = int.MaxValue;
-                            foreach (Vector3Int position in availablePositions)
-                            {
-                                double distance = Math.Sqrt(Math.Pow(position.x - target.x, 2) + Math.Pow(position.y - target.y, 2));
-                                if (bestDistance > distance)
-                                {
-                                    bestDistance = distance;
-                                    bestPosition = position;
-                                }
-                            }
+                            Vector3Int bestPosition = GetBestPosition(cell.position, availablePositions, takenPredatorPositions);
 
                             newCells.Add(new Cell(bestPosition, predator));
+                            takenPredatorPositions.Add(bestPosition); // Ensure another predator doesn't take place
                         }
                     }
                     // Stay in place if prey positions not found yet (done during 2nd step)
                     else
+                    {
                         newCells.Add(new Cell(cell.position, predator));
+                        takenPredatorPositions.Add(cell.position); // Ensure another predator doesn't take place
+                    }
                 }
                 // Prey logic
                 else if (cell.state == prey)
                 {
                     List<Vector3Int> availablePositions = GetAvailablePositions(cell.position, false);
-                    Vector3Int randomPosition = availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
-                    newCells.Add(new Cell(randomPosition, prey));
+                    bool predatorNearby = false;
 
-                    // If another prey nearby and mostly alone, chance of baby prey is left in previous position (only if prey moves)
-                    if (GetStateNearby(cell.position, prey).z != int.MaxValue && randomPosition != cell.position && availablePositions.Count == 3 && UnityEngine.Random.value > .35)
-                        newCells.Add(new Cell(cell.position, prey));
+                    // Remove dangerous positions
+                    List<Vector3Int> toRemove = new List<Vector3Int>();
+                    foreach (Vector3Int position in availablePositions)
+                        if (GetStateNearby(position, predator).z != int.MaxValue)
+                        {
+                            predatorNearby = true;
+                            toRemove.Add(position);
+                        }
+                    foreach (Vector3Int position in toRemove)
+                        availablePositions.Remove(position);
+
+                    // If no available positions left, add current position back
+                    if (availablePositions.Count == 0)
+                        availablePositions.Add(cell.position);
+
+                    // Move to best position or random position depending on whether best is in the same place + small chance of fainting/freezing
+                    Vector3Int randomPosition = availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
+                    Vector3Int bestPosition = GetBestPosition(cell.position, availablePositions, takenPreyPositions);
+                    Vector3Int nextPosition;
+
+                    if (UnityEngine.Random.value > .95)
+                        nextPosition = cell.position;
+                    else if (bestPosition == cell.position)
+                        nextPosition = randomPosition;
+                    else
+                        nextPosition = bestPosition;
+
+                    // Move
+                    newCells.Add(new Cell(nextPosition, prey));
+                    takenPreyPositions.Add(nextPosition);
+
+                    // If another prey nearby, no predators nearby, and mostly alone, baby prey is left in previous position (only if prey moves)
+                    // Prey count caps at DrawGrid population goal
+                    if (GetStateNearby(cell.position, prey).z != int.MaxValue && nextPosition != cell.position)
+                        if (availablePositions.Count > 3 && !predatorNearby && preyCount < drawGrid.populationGoal)
+                        {
+                            newCells.Add(new Cell(cell.position, prey));
+                            newBabyPreyCount++;
+                        }
                 }
                 else
                 {
@@ -109,7 +136,8 @@ public class HuntingLife : ILife
             }
         }
 
-        UpdatePreyPositions(newCells);
+        UpdatePreyPositionsAndCounts(newCells);
+        Debug.Log($"predator count: {predatorCount}, prey count: {preyCount}");
         return newCells;
     }
 
@@ -143,14 +171,21 @@ public class HuntingLife : ILife
         return availablePositions;
     }
 
-    // Clears prey position list and adds new prey positions
-    private void UpdatePreyPositions(HashSet<Cell> cells)
+    // Clears prey position list and adds new prey positions, also recounts prey and predator counts
+    private void UpdatePreyPositionsAndCounts(HashSet<Cell> cells)
     {
         preyPositions.Clear();
+        predatorCount = 0;
+        preyCount = 0;
         foreach (Cell cell in cells)
         {
             if (cell.state == prey)
+            {
                 preyPositions.Add(cell.position);
+                preyCount++;
+            }
+            else
+                predatorCount++;
         }
     }
 
@@ -169,5 +204,41 @@ public class HuntingLife : ILife
         }
 
         return stateNearby;
+    }
+
+    // Given the cells current position and a list of available positions, finds the closest prey and returns the available position closest to them.
+    private Vector3Int GetBestPosition(Vector3Int currentPosition, List<Vector3Int> availablePositions, List<Vector3Int> takenPositions)
+    {
+        // Find best target
+        Vector3Int target = currentPosition; // Will stay in place if no target found
+        double bestDistance = int.MaxValue;
+        foreach (Vector3Int position in preyPositions)
+        {
+            double distance = Math.Sqrt(Math.Pow(currentPosition.x - position.x, 2) + Math.Pow(currentPosition.y - position.y, 2));
+            if (bestDistance > distance)
+            {
+                bestDistance = distance;
+                target = position;
+            }
+        }
+
+        // Find best next position
+        Vector3Int bestPosition = currentPosition; // Will stay in place if no best position found
+        bestDistance = int.MaxValue;
+        foreach (Vector3Int position in availablePositions)
+        {
+            // Ensure position not already taken by predator and possibly (if search is for prey) prey
+            if (!takenPositions.Contains(position) && !takenPredatorPositions.Contains(position))
+            {
+                double distance = Math.Sqrt(Math.Pow(position.x - target.x, 2) + Math.Pow(position.y - target.y, 2));
+                if (bestDistance > distance)
+                {
+                    bestDistance = distance;
+                    bestPosition = position;
+                }
+            }
+        }
+
+        return bestPosition;
     }
 }

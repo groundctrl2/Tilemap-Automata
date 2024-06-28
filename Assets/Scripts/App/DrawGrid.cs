@@ -10,6 +10,7 @@ public class DrawGrid : MonoBehaviour
     [SerializeField] private Tile[] tiles = new Tile[8];
     [SerializeField] private float updateInterval = 0.05f; // In seconds
     [SerializeField] private Pattern Pattern;
+    [SerializeField] public int populationGoal = 5000;
 
     public int iterations { get; private set; }
     public float time { get; private set; }
@@ -17,7 +18,6 @@ public class DrawGrid : MonoBehaviour
 
     private ILife model;
     private HashSet<Cell> cells;
-    public int populationGoal { get; private set; }
 
     // 1st step, no external reference needed (Start opposite)
     private void Awake()
@@ -39,7 +39,6 @@ public class DrawGrid : MonoBehaviour
         startTime = Time.time; // Initialize start time
         model = new HuntingLife(this);
         SetPattern(Pattern);
-        populationGoal = 15000;
     }
 
     // Runs Simulate() on enable
