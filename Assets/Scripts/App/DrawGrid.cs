@@ -11,6 +11,7 @@ public class DrawGrid : MonoBehaviour
     [SerializeField] private float updateInterval = 0.05f; // In seconds
     [SerializeField] private Pattern Pattern;
     [SerializeField] public int populationGoal = 5000;
+    [SerializeField] public float wanderChance = .8f;
 
     public int iterations { get; private set; }
     public float time { get; private set; }
@@ -37,7 +38,7 @@ public class DrawGrid : MonoBehaviour
 
         cells = new HashSet<Cell>();
         startTime = Time.time; // Initialize start time
-        model = new HuntingLife(this);
+        model = new PathPheromoneLife(this);
         SetPattern(Pattern);
     }
 
