@@ -1,5 +1,5 @@
 # Tilemap Automata
-An evolving project, it currently uses Unity Tilemaps to do simulations such as Conway's Game of Life.
+Simulations such as Conway's Game of Life done on a Unity Tilemap.
 
 ## Credits
 Game of Life (https://github.com/zigurous/unity-game-of-life-tutorial) by Zigurous
