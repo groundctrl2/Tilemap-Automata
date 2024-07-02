@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PathPheromoneLife : ILife
 {
     private DrawGrid drawGrid;
-    private int xBound = 15;
-    private int yBound = 15;
+    private int xBound = 35;
+    private int yBound = 35;
     private System.Random random = new();
 
     public PathPheromoneLife(DrawGrid grid)
@@ -26,7 +27,7 @@ public class PathPheromoneLife : ILife
             if (cell.state == CellState.alive)
             {
                 aliveCount++;
-                Vector3Int nextPosition = new Vector3Int(0, 0, 0);
+                Vector3Int nextPosition = cell.position;
                 List<Vector3Int> nextPositions = new List<Vector3Int>(); // best options list
                 int nextPositionPriority = 0;
                 List<Vector3Int> availablePositions = GetAvailablePositions(cell.position, takenPositions);
@@ -63,12 +64,12 @@ public class PathPheromoneLife : ILife
                     nextPosition = nextPositions[randomIndex];
                 }
 
-                // Random chance of wandering to dead/empty space instead
-                if (!takenPositions.Contains(emptyPosition) && UnityEngine.Random.value > drawGrid.wanderChance)
-                    nextPosition = emptyPosition;
-
-                if (nextPosition == new Vector3Int(0, 0, 0))
-                    Debug.Log("nextPosition never changed");
+                // Random chance of birth (uses wandering chance) to dead/empty space
+                if (!takenPositions.Contains(emptyPosition) && UnityEngine.Random.value > .99)
+                {
+                    newCells.Add(new Cell(emptyPosition, CellState.alive));
+                    takenPositions.Add(emptyPosition); // Ensure position isn't taken twice
+                }
 
                 // Move to next position
                 newCells.Add(new Cell(nextPosition, CellState.alive));
@@ -124,15 +125,15 @@ public class PathPheromoneLife : ILife
 
         if (state == CellState.alive)
             priority = 6;
-        else if (state == CellState.stage2)
-            priority = 5;
         else if (state == CellState.stage3)
-            priority = 4;
+            priority = 5;
         else if (state == CellState.stage4)
-            priority = 3;
+            priority = 4;
         else if (state == CellState.stage5)
-            priority = 2;
+            priority = 3;
         else if (state == CellState.dead)
+            priority = 2;
+        else if (state == CellState.stage2)
             priority = 1;
         else
             priority = 0;

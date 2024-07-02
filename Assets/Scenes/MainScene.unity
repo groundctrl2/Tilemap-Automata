@@ -418,10 +418,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6c4aad2df26db2946907e2ed9a388e80, type: 2}
   - {fileID: 11400000, guid: eac142ef9c8b9c545affdcf5c60cbc77, type: 2}
   - {fileID: 11400000, guid: 3d1eea21359521e46b69fd2962059d67, type: 2}
-  updateInterval: 0.1
-  Pattern: {fileID: 11400000, guid: 654c1336e7254094a8ea3c323ed84e55, type: 2}
+  updateInterval: 0.05
+  Pattern: {fileID: 11400000, guid: 68cb4d1ef7013d74589511cd1006eb36, type: 2}
   populationGoal: 1000
-  wanderChance: 0.9
+  wanderChance: 0.7
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
